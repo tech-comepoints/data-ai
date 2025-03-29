@@ -18,16 +18,25 @@ git clone https://github.com/YOUR_USERNAME/data-dashboard.git
 cd data-dashboard
 ```
 
-2. Create a virtual environment
+2. Use a Virtual Environment (safe and clean)
+Here's the quick fix:
+
+1. Create a virtual environment
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3 -m venv venv
 ```
 
-3. Install dependencies
+2. Activate it
+```bash
+source venv/bin/activate
+```
+Your terminal prompt should now show (venv) in front — you're inside the virtual environment.
+
+3. Install your requirements
 ```bash
 pip install -r requirements.txt
 ```
+You're good to go 🎉
 
 4. Configure the dashboard
 - Edit `app/config/config.yaml` with your settings
