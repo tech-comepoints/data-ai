@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pandas
+plotly
+jinja2
+python-multipart
+sqlalchemy
+pyyaml
+requests
+pytest
+pytest-cov
+flake8
+black

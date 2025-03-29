@@ -1,0 +1,47 @@
+# API Configuration
+api:
+  base_url: "https://your-api-endpoint.com"
+  endpoints:
+    data: "/data"
+  headers:
+    Authorization: "Bearer YOUR_API_KEY"
+    Content-Type: "application/json"
+
+# Data Categories
+categories:
+  high_value:
+    name: "High Value"
+    filter:
+      column: "value"
+      operator: ">"
+      threshold: 1000
+  medium_value:
+    name: "Medium Value"
+    filter:
+      column: "value"
+      operator: "between"
+      range: [100, 1000]
+  low_value:
+    name: "Low Value"
+    filter:
+      column: "value"
+      operator: "<"
+      threshold: 100
+
+# Dashboard Configuration
+dashboard:
+  title: "Data Analytics Dashboard"
+  refresh_interval: 300  # in seconds
+  default_chart:
+    type: "line"  # options: line, bar, scatter
+    x_column: "date"
+    y_column: "value"
+  available_charts:
+    - line
+    - bar
+    - scatter
+    - area
+  layout:
+    charts_per_row: 2
+    chart_height: 400
+    chart_width: 600

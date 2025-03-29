@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ dashboard_config.title }}</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .dashboard {
+            padding: 20px;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat({{ dashboard_config.layout.charts_per_row }}, 1fr);
+            gap: 20px;
+        }
+        .chart-container {
+            width: {{ dashboard_config.layout.chart_width }}px;
+            height: {{ dashboard_config.layout.chart_height }}px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>{{ dashboard_config.title }}</h1>
+        
+        <div class="controls">
+            <select id="chart-type">
+                {% for chart_type in dashboard_config.available_charts %}
+                <option value="{{ chart_type }}">{{ chart_type|title }} Chart</option>
+                {% endfor %}
+            </select>
+            <select id="x-column">
+                <!-- Will be populated dynamically -->
+            </select>
+            <select id="y-column">
+                <!-- Will be populated dynamically -->
+            </select>
+            <button onclick="updateCharts()">Update Charts</button>
+        </div>
+        
+        <div class="charts-container" id="charts"></div>
+    </div>
+
+    <script>
+        const dashboardConfig = {{ dashboard_config|tojson|safe }};
+        let updateTimer;
+
+        function updateCharts() {
+            const xColumn = document.getElementById('x-column').value;
+            const yColumn = document.getElementById('y-column').value;
+            const chartType = document.getElementById('chart-type').value;
+            
+            fetch(`/api/data?x_column=${xColumn}&y_column=${yColumn}&chart_type=${chartType}`)
+                .then(response => response.json())
+                .then(data => {
+                    const chartsDiv = document.getElementById('charts');
+                    chartsDiv.innerHTML = '';
+                    
+                    Object.entries(data).forEach(([categoryId, chartData]) => {
+                        const container = document.createElement('div');
+                        container.className = 'chart-container';
+                        container.id = `chart-${categoryId}`;
+                        chartsDiv.appendChild(container);
+                        
+                        const trace = {
+                            x: chartData.x,
+                            y: chartData.y,
+                            type: chartType,
+                            name: chartData.name
+                        };
+                        
+                        Plotly.newPlot(
+                            `chart-${categoryId}`,
+                            [trace],
+                            {
+                                title: `${categories[categoryId].name}`,
+                                xaxis: { title: xColumn },
+                                yaxis: { title: yColumn }
+                            }
+                        );
+                    });
+                });
+        }
+
+        // Set up auto-refresh
+        function setupAutoRefresh() {
+            if (updateTimer) clearInterval(updateTimer);
+            updateTimer = setInterval(updateCharts, dashboardConfig.refresh_interval * 1000);
+        }
+
+        // Initial load
+        updateCharts();
+        setupAutoRefresh();
+    </script>
+</body>
+</html>
