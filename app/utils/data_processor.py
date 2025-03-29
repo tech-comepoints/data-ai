@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 from datetime import datetime
 from typing import Dict, List
-from app.utils.config_loader import ConfigLoader
+from app.utils.config_loader import ConfigLoader, CategoryFilter
 
 class DataProcessor:
     def __init__(self, config_loader: ConfigLoader):
@@ -12,27 +12,19 @@ class DataProcessor:
 
     def fetch_data(self) -> pd.DataFrame:
         """Fetch data from configured API endpoint"""
-        url = self.api_config['base_url'] + self.api_config['endpoints']['data']
-        response = requests.get(url, headers=self.api_config['headers'])
-        response.raise_for_status()
-        return pd.DataFrame(response.json())
-
-    def fetch_news_data(self) -> pd.DataFrame:
-        """Fetch news data from NewsAPI"""
         try:
-            # Construct the API URL
-            url = 'https://newsapi.org/v2/top-headlines'
+            url = self.api_config['base_url'] + self.api_config['endpoints']['data']
             
             # Set up the parameters
             params = {
-                'language': 'en',
-                'pageSize': 100,
+                'language': self.api_config['params']['language'],
+                'pageSize': self.api_config['params']['pageSize'],
                 'apiKey': self.api_config['api_key']
             }
 
             # Make the request
             response = requests.get(url, params=params)
-            response.raise_for_status()  # Raise an exception for bad status codes
+            response.raise_for_status()
             data = response.json()
 
             # Convert to DataFrame
@@ -46,10 +38,6 @@ class DataProcessor:
                 # Extract source name
                 df['source'] = df['source'].apply(lambda x: x['name'])
                 
-                # Add a default category if not present
-                if 'category' not in df.columns:
-                    df['category'] = 'general'
-                
                 return df
             else:
                 print(f"API Error: {data.get('message', 'Unknown error')}")
@@ -59,23 +47,54 @@ class DataProcessor:
             print(f"Error fetching data: {e}")
             return pd.DataFrame()
 
-    def categorize_data(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-        """Categorize news data based on configuration"""
-        categories_config = self.config.get_categories_config()
+    def fetch_news_data(self) -> Dict[str, pd.DataFrame]:
+        """Fetch news data from NewsAPI for each category"""
         categorized_data = {}
+        
+        try:
+            base_url = self.api_config['base_url']
+            endpoint = self.api_config['endpoints']['news']
+            url = base_url + endpoint
 
-        if df.empty:
-            return categorized_data
+            # Fetch data for each category
+            for cat_id, cat_config in self.categories_config.items():
+                category_filter = CategoryFilter(cat_config)
+                
+                # Set up the parameters
+                params = {
+                    'language': self.api_config['params']['language'],
+                    'pageSize': self.api_config['params']['pageSize'],
+                    'apiKey': self.api_config['api_key']
+                }
+                # Add category-specific parameters
+                params.update(category_filter.get_query_params())
 
-        for cat_id, cat_config in categories_config.items():
-            filter_col = cat_config['filter']['column']
-            filter_val = cat_config['filter']['value']
-            
-            # For empty or missing category, put in 'general'
-            if filter_col == 'category' and filter_col not in df.columns:
-                categorized_data[cat_id] = df
-            else:
-                categorized_data[cat_id] = df[df[filter_col] == filter_val]
+                # Make the request
+                response = requests.get(url, params=params)
+                response.raise_for_status()
+                data = response.json()
+
+                if data['status'] == 'ok' and data['articles']:
+                    df = pd.DataFrame(data['articles'])
+                    
+                    # Process dates
+                    df['publishedAt'] = pd.to_datetime(df['publishedAt'])
+                    df['date'] = df['publishedAt'].dt.date
+                    
+                    # Extract source name
+                    df['source'] = df['source'].apply(lambda x: x['name'])
+                    
+                    # Add category
+                    df['category'] = cat_id
+                    
+                    categorized_data[cat_id] = df
+                else:
+                    print(f"API Error for category {cat_id}: {data.get('message', 'Unknown error')}")
+                    categorized_data[cat_id] = pd.DataFrame()
+
+        except Exception as e:
+            print(f"Error fetching news data: {e}")
+            return {cat: pd.DataFrame() for cat in self.categories_config.keys()}
 
         return categorized_data
 

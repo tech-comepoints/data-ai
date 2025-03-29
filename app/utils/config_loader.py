@@ -1,10 +1,16 @@
+import os
 import yaml
 import operator
-from typing import Dict, Any
+from typing import Dict, Any, List
 import pandas as pd
+from pathlib import Path
 
 class ConfigLoader:
-    def __init__(self, config_path: str = "app/config/config.yaml"):
+    def __init__(self):
+        # Get the project root directory (data-ai)
+        root_dir = Path(__file__).parent.parent.parent
+        config_path = root_dir / 'config' / 'config.yaml'
+        
         with open(config_path, 'r') as file:
             self.config = yaml.safe_load(file)
 
@@ -20,18 +26,17 @@ class ConfigLoader:
 class CategoryFilter:
     def __init__(self, category_config: Dict):
         self.name = category_config['name']
-        self.filter_config = category_config['filter']
+        self.filters = category_config['filters']
+
+    def get_query_params(self) -> Dict[str, str]:
+        """Convert filters list to a dictionary of query parameters"""
+        params = {}
+        for filter_dict in self.filters:
+            params.update(filter_dict)
+        return params
 
     def apply_filter(self, df: pd.DataFrame) -> pd.DataFrame:
-        column = self.filter_config['column']
-        op = self.filter_config['operator']
-
-        if op == '>':
-            return df[df[column] > self.filter_config['threshold']]
-        elif op == '<':
-            return df[df[column] < self.filter_config['threshold']]
-        elif op == 'between':
-            range_min, range_max = self.filter_config['range']
-            return df[(df[column] >= range_min) & (df[column] <= range_max)]
-        else:
-            raise ValueError(f"Unsupported operator: {op}")
+        """Apply filters to the DataFrame based on the query parameters"""
+        # This method can be implemented if we need to filter the DataFrame
+        # after fetching the data. Currently, filtering is done via API query params.
+        return df
