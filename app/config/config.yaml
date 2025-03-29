@@ -9,6 +9,12 @@ api:
 
 # Data Categories
 categories:
+  category1:
+    name: "Category 1"
+    filter:
+      column: "value"
+      operator: ">"
+      threshold: 1000
   high_value:
     name: "High Value"
     filter:

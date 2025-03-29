@@ -18,11 +18,7 @@ class DataProcessor:
 
     def categorize_data(self, df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         """Categorize data based on configuration"""
-        categorized_data = {}
-        for cat_id, cat_config in self.categories_config.items():
-            category_filter = CategoryFilter(cat_config)
-            categorized_data[cat_id] = category_filter.apply_filter(df)
-        return categorized_data
+        return {}  # Placeholder implementation
 
     def process_for_chart(self, df: pd.DataFrame, x_column: str, y_column: str) -> Dict:
         """Process data for chart visualization"""

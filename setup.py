@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="data-dashboard",
+    name="data-ai",
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
@@ -10,8 +10,6 @@ setup(
         'pandas',
         'plotly',
         'jinja2',
-        'python-multipart',
-        'sqlalchemy',
         'pyyaml',
         'requests',
     ],
