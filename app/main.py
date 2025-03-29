@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from utils.config_loader import ConfigLoader
-from utils.data_processor import DataProcessor
+from app.utils.config_loader import ConfigLoader
+from app.utils.data_processor import DataProcessor
 import json
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -63,6 +63,21 @@ async def get_chart_data(
         return charts_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/news")
+async def get_news_data(x_column: str = None, y_column: str = None):
+    df = data_processor.fetch_news_data()
+    categorized_data = data_processor.categorize_data(df)
+    
+    charts_data = {}
+    for cat_id, cat_df in categorized_data.items():
+        charts_data[cat_id] = data_processor.process_for_chart(
+            cat_df, 
+            x_column or 'publishedAt', 
+            y_column or 'count'
+        )
+    
+    return charts_data
 
 # Add error handling
 @app.exception_handler(Exception)

@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ dashboard_config.title }}</title>
+    <title>News Analytics Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         .dashboard {
             padding: 20px;
+            font-family: Arial, sans-serif;
         }
         .controls {
             margin: 20px 0;
@@ -16,22 +17,20 @@
         }
         .charts-container {
             display: grid;
-            grid-template-columns: repeat({{ dashboard_config.layout.charts_per_row }}, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
+            padding: 20px;
         }
         .chart-container {
-            width: {{ dashboard_config.layout.chart_width }}px;
-            height: {{ dashboard_config.layout.chart_height }}px;
-            background: white;
             border: 1px solid #ddd;
-            border-radius: 5px;
             padding: 15px;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
     <div class="dashboard">
-        <h1>{{ dashboard_config.title }}</h1>
+        <h1>News Analytics Dashboard</h1>
         
         <div class="controls">
             <select id="chart-type">
@@ -60,7 +59,7 @@
             const yColumn = document.getElementById('y-column').value;
             const chartType = document.getElementById('chart-type').value;
             
-            fetch(`/api/data?x_column=${xColumn}&y_column=${yColumn}&chart_type=${chartType}`)
+            fetch('/api/news')
                 .then(response => response.json())
                 .then(data => {
                     const chartsDiv = document.getElementById('charts');
@@ -72,20 +71,16 @@
                         container.id = `chart-${categoryId}`;
                         chartsDiv.appendChild(container);
                         
-                        const trace = {
-                            x: chartData.x,
-                            y: chartData.y,
-                            type: chartType,
-                            name: chartData.name
-                        };
-                        
                         Plotly.newPlot(
                             `chart-${categoryId}`,
-                            [trace],
+                            [{
+                                x: chartData.x,
+                                y: chartData.y,
+                                type: chartData.type || 'bar'
+                            }],
                             {
-                                title: `${categories[categoryId].name}`,
-                                xaxis: { title: xColumn },
-                                yaxis: { title: yColumn }
+                                title: `${categoryId.charAt(0).toUpperCase() + categoryId.slice(1)} News`,
+                                margin: { t: 30 }
                             }
                         );
                     });
@@ -95,7 +90,7 @@
         // Set up auto-refresh
         function setupAutoRefresh() {
             if (updateTimer) clearInterval(updateTimer);
-            updateTimer = setInterval(updateCharts, dashboardConfig.refresh_interval * 1000);
+            updateTimer = setInterval(updateCharts, 5 * 60 * 1000);
         }
 
         // Initial load
